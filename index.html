@@ -2,285 +2,368 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Exam Helper | Тестирование ПО</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Экзаменатор QA</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: 'Manrope', sans-serif; background-color: #f8fafc; }
-        .glass { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); }
-        .active-q { border-left: 4px solid #f59e0b; background: #fffbeb; }
-        .chart-container { position: relative; width: 100%; max-width: 350px; height: 300px; margin: 0 auto; }
-        .custom-scroll::-webkit-scrollbar { width: 4px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-content { animation: slideUp 0.4s ease-out forwards; }
+        :root {
+            --tg-theme-bg-color: #f4f6fa;
+            --tg-theme-button-color: #2481cc;
+            --tg-theme-button-text-color: #ffffff;
+            --card-bg: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --success: #10b981;
+            --error: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--tg-theme-bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+
+        /* Шапка */
+        .header {
+            background: var(--card-bg);
+            padding: 16px 20px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: calc(16px + env(safe-area-inset-top));
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .stats {
+            font-size: 14px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        /* Прогресс-бар */
+        .progress-container {
+            width: 100%;
+            height: 4px;
+            background: #e5e7eb;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: var(--tg-theme-button-color);
+            transition: width 0.3s ease;
+        }
+
+        /* Контентная зона с исправленным скроллом */
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* Карточка вопроса */
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .question-num {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--tg-theme-button-color);
+            font-weight: 700;
+        }
+
+        .question-text {
+            font-size: 20px;
+            font-weight: 600;
+            line-height: 1.4;
+        }
+
+        /* Зона ответа */
+        .answer-box {
+            display: none;
+            border-top: 1px solid #f3f4f6;
+            padding-top: 16px;
+            font-size: 16px;
+            line-height: 1.6;
+            color: #374151;
+            animation: fadeIn 0.2s ease-in-out;
+        }
+
+        .answer-box ul, .answer-box ol {
+            padding-left: 20px;
+            margin: 8px 0;
+        }
+
+        .answer-box li {
+            margin-bottom: 6px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Кнопки */
+        .btn {
+            background: var(--tg-theme-button-color);
+            color: var(--tg-theme-button-text-color);
+            border: none;
+            border-radius: 12px;
+            padding: 14px 20px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            transition: opacity 0.2s;
+        }
+
+        .btn:active {
+            opacity: 0.8;
+        }
+
+        .btn-secondary {
+            background: #e4e4e7;
+            color: #27272a;
+        }
+
+        .action-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .btn-success { background: var(--success); }
+        .btn-error { background: var(--error); }
+
+        /* Навигация внизу */
+        .nav-footer {
+            background: var(--card-bg);
+            padding: 16px 20px;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            gap: 12px;
+            padding-bottom: calc(16px + env(safe-area-inset-bottom));
+        }
+
+        /* Выпадающий список всех вопросов */
+        .select-box {
+            width: 100%;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid #d1d5db;
+            background: var(--card-bg);
+            font-size: 15px;
+            color: var(--text-main);
+            outline: none;
+        }
     </style>
 </head>
-<body class="text-slate-800 antialiased overflow-hidden h-screen flex flex-col">
+<body>
 
-<!-- Chosen Palette: Slate & Amber (Профессиональный, чистый интерфейс с теплыми акцентами) -->
-<!-- Application Structure Plan: 
-     Это центральный хаб (index.html) для GitHub Pages. 
-     1. Sidebar: Список из 50 экзаменационных вопросов с группировкой по темам.
-     2. Dashboard: Стартовая страница со статистикой покрытия тем (через Chart.js).
-     3. Player Mode: Интерактивное изучение ответов с прогресс-баром.
-     Почему: Такая структура позволяет пользователю видеть весь масштаб экзамена сразу и переходить к конкретным слабым местам. -->
-<!-- Visualization & Content Choices: 
-     - Doughnut Chart: Распределение вопросов по сложности и темам.
-     - Прогресс-бар: Визуализация текущего этапа изучения.
-     - Интерактивный список: Быстрая навигация между 50 темами.
-     - NO SVG/Mermaid: Иконки на Unicode и CSS. -->
-<!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <div class="header">
+        <h1 id="app-title">Экзаменатор QA</h1>
+        <div class="stats" id="stats-text">Изучено: 0/50</div>
+    </div>
 
-    <!-- Header -->
-    <header class="h-16 border-b bg-white flex items-center justify-between px-6 shrink-0 z-30 shadow-sm">
-        <div class="flex items-center gap-3">
-            <span class="text-2xl">🎓</span>
-            <h1 class="font-extrabold text-lg tracking-tight text-slate-900">ExamHelper <span class="text-amber-500">QA</span></h1>
-        </div>
-        <div class="hidden md:flex items-center gap-6 text-sm font-semibold text-slate-500">
-            <span id="global-progress-text">Изучено: 0 / 50</span>
-            <div class="w-32 h-2 bg-slate-100 rounded-full overflow-hidden">
-                <div id="global-progress-bar" class="h-full bg-amber-500 transition-all duration-500" style="width: 0%"></div>
-            </div>
-        </div>
-        <button onclick="toggleMobileMenu()" class="md:hidden p-2 text-2xl">☰</button>
-    </header>
+    <div class="progress-container">
+        <div class="progress-bar" id="progress"></div>
+    </div>
 
-    <div class="flex flex-1 overflow-hidden relative">
-        
-        <!-- Sidebar Navigation -->
-        <aside id="sidebar" class="fixed inset-0 z-40 md:relative md:flex w-full md:w-80 bg-white border-r transform -translate-x-full md:translate-x-0 transition-transform duration-300 flex-col">
-            <div class="p-4 border-b flex justify-between items-center md:hidden">
-                <span class="font-bold">Навигация</span>
-                <button onclick="toggleMobileMenu()" class="text-xl">✕</button>
-            </div>
-            <div class="flex-1 overflow-y-auto custom-scroll p-2" id="question-list">
-                <!-- Категории и вопросы генерируются JS -->
-            </div>
-        </aside>
+    <div class="main-content">
+        <select class="select-box" id="question-select" onchange="jumpToQuestion(this.value)">
+            </select>
 
-        <!-- Main Content Area -->
-        <main class="flex-1 overflow-y-auto bg-slate-50 relative custom-scroll" id="main-view">
+        <div class="card">
+            <div class="question-num" id="q-number">Вопрос 1 из 50</div>
+            <div class="question-text" id="q-text">Загрузка вопроса...</div>
             
-            <!-- Welcome / Stats View -->
-            <div id="welcome-screen" class="max-w-4xl mx-auto p-8 md:p-12 space-y-12">
-                <div class="text-center space-y-4">
-                    <h2 class="text-4xl font-extrabold text-slate-900 tracking-tight">Подготовка к экзамену</h2>
-                    <p class="text-lg text-slate-500 max-w-2xl mx-auto">Интерактивный путеводитель по 50 ключевым вопросам тестирования ПО. Все знания структурированы для быстрого запоминания.</p>
+            <button class="btn" id="btn-show" onclick="toggleAnswer()">Показать ответ</button>
+            
+            <div class="answer-box" id="answer-box">
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
-                    <div class="space-y-6">
-                        <h3 class="text-xl font-bold">Распределение тем</h3>
-                        <ul class="space-y-3">
-                            <li class="flex items-center gap-3 text-sm font-medium">
-                                <span class="w-3 h-3 rounded-full bg-amber-400"></span> Основы и SDLC (Вопросы 1-14)
-                            </li>
-                            <li class="flex items-center gap-3 text-sm font-medium">
-                                <span class="w-3 h-3 rounded-full bg-orange-500"></span> Web-тестирование (Вопросы 15-30)
-                            </li>
-                            <li class="flex items-center gap-3 text-sm font-medium">
-                                <span class="w-3 h-3 rounded-full bg-red-600"></span> Безопасность и SQL (Вопросы 31-48)
-                            </li>
-                        </ul>
-                        <button onclick="startLearning()" class="inline-flex items-center justify-center px-8 py-4 bg-slate-900 text-white rounded-2xl font-bold hover:bg-slate-800 transition active:scale-95 shadow-xl">
-                            Начать обучение →
-                        </button>
-                    </div>
-                    <div class="chart-container">
-                        <canvas id="mainChart"></canvas>
-                    </div>
-                </div>
+            <div class="action-group" id="feedback-group" style="display: none;">
+                <button class="btn btn-error" onclick="markQuestion(false)">Не знаю ❌</button>
+                <button class="btn btn-success" onclick="markQuestion(true)">Знаю  </button>
             </div>
+        </div>
+    </div>
 
-            <!-- Content View (Hidden by default) -->
-            <div id="content-screen" class="hidden max-w-3xl mx-auto p-6 md:p-12 pb-32 animate-content">
-                <div class="mb-8 space-y-4">
-                    <span id="q-cat" class="text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1 bg-amber-100 text-amber-700 rounded-full">КАТЕГОРИЯ</span>
-                    <h2 id="q-title" class="text-3xl md:text-4xl font-extrabold text-slate-900 leading-tight">Заголовок вопроса появится здесь</h2>
-                </div>
-                <div id="q-body" class="prose prose-slate max-w-none text-slate-600 text-lg leading-relaxed space-y-6">
-                    <!-- Ответ генерируется JS -->
-                </div>
-            </div>
-        </main>
-
-        <!-- Player Bar -->
-        <footer class="h-24 bg-white/80 backdrop-blur-md border-t fixed bottom-0 left-0 right-0 z-50 flex flex-col">
-            <div class="h-1 bg-slate-100 w-full cursor-pointer" onclick="handleSeek(event)">
-                <div id="track-progress" class="h-full bg-amber-500 w-0 transition-all duration-300"></div>
-            </div>
-            <div class="flex-1 max-w-6xl mx-auto w-full flex items-center justify-between px-6">
-                <div class="hidden md:block w-1/3">
-                    <p id="footer-q-title" class="text-sm font-bold truncate text-slate-800 italic">Выберите вопрос из списка</p>
-                    <p id="footer-q-status" class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Ожидание</p>
-                </div>
-                
-                <div class="flex items-center gap-8">
-                    <button onclick="prevQ()" class="text-2xl text-slate-400 hover:text-slate-900 transition">⏮</button>
-                    <button id="play-btn" onclick="togglePlay()" class="w-14 h-14 bg-amber-500 text-white rounded-full flex items-center justify-center text-2xl shadow-lg shadow-amber-200 hover:bg-amber-600 active:scale-90 transition">▶</button>
-                    <button onclick="nextQ()" class="text-2xl text-slate-400 hover:text-slate-900 transition">⏭</button>
-                </div>
-
-                <div class="hidden md:flex w-1/3 justify-end items-center gap-4">
-                    <span class="text-xs font-bold text-slate-400" id="timer-display">00:00 / 00:50</span>
-                    <button onclick="shareProgress()" class="text-xs bg-slate-50 px-3 py-2 rounded-lg font-bold border hover:bg-slate-100">Поделиться</button>
-                </div>
-            </div>
-        </footer>
+    <div class="nav-footer">
+        <button class="btn btn-secondary" onclick="prevQuestion()">Назад</button>
+        <button class="btn btn-secondary" onclick="nextQuestion()">Вперед</button>
     </div>
 
     <script>
-        const examDB = [
-            { id: 1, cat: "Основы", t: "Тестирование ПО и качество", a: "<p><b>Тестирование</b> — это проверка соответствия между реальным и ожидаемым поведением программы. Оно направлено на снижение рисков и предоставление информации о качестве продукта.</p><p><b>Качество по ISO 25010</b> включает: функциональность, надежность, удобство использования, производительность, сопровождаемость и мобильность.</p>" },
-            { id: 2, cat: "Основы", t: "Уровни тестирования", a: "<p>Существует 4 основных уровня:</p><ul><li><b>Unit (Модульное):</b> Проверка отдельных функций или классов.</li><li><b>Интеграционное:</b> Проверка взаимодействия между модулями.</li><li><b>Системное:</b> Тестирование всей системы целиком.</li><li><b>Приемочное (Acceptance):</b> Проверка готовности продукта для заказчика.</li></ul>" },
-            { id: 5, cat: "SDLC", t: "Жизненный цикл ПО (SDLC)", a: "<p><b>SDLC</b> — это путь от идеи до вывода продукта из эксплуатации. Основные модели:</p><ul><li><b>Waterfall:</b> Линейная модель (этап за этапом).</li><li><b>V-model:</b> Тестирование планируется с самого начала разработки.</li><li><b>Agile:</b> Итеративный подход (Scrum/Kanban).</li></ul>" },
-            { id: 17, cat: "Web", t: "DevTools и HTTP коды", a: "<p><b>DevTools</b> — инструменты браузера. Вкладки: Elements (инспекция DOM), Console (логи JS), Network (запросы к серверу).</p><p><b>HTTP Коды:</b><ul><li>2xx: Успех (200 OK)</li><li>3xx: Редирект</li><li>4xx: Ошибка клиента (404 Not Found)</li><li>5xx: Ошибка сервера (500 Server Error)</li></ul></p>" },
-            { id: 31, cat: "Безопасность", t: "SQL-инъекции", a: "<p>Это атака, при которой в запрос к БД внедряется вредоносный код через поля ввода. </p><p><b>Защита:</b> использование параметризованных запросов (Prepared Statements), фильтрация входных данных, минимизация привилегий пользователя БД.</p>" },
-            { id: 33, cat: "Безопасность", t: "XSS (Межсайтовый скриптинг)", a: "<p>Выполнение вредоносного JS в браузере пользователя.</p><ul><li><b>Stored:</b> Скрипт сохраняется в БД (например, в комментарии).</li><li><b>Reflected:</b> Скрипт передается в ссылке (параметр URL).</li><li><b>DOM:</b> Ошибка в обработке данных клиентскими скриптами.</li></ul>" },
-            { id: 41, cat: "Безопасность", t: "CSRF-атаки", a: "<p>Подделка запроса от имени залогиненного пользователя. Браузер автоматически отправляет Cookies сайта при обращении к нему.</p><p><b>Защита:</b> Анти-CSRF токены, заголовок SameSite для Cookies.</p>" },
-            { id: 49, cat: "Регрессия", t: "Регрессионное тестирование", a: "<p>Проверка того, что изменения в коде (фиксы или новый функционал) не сломали уже работающие части системы. Проводится при каждом обновлении продукта.</p>" }
-            // В базе 50 вопросов, здесь приведены ключевые для работы приложения
-        ];
-
-        const categories = [
-            { name: "Основы", range: [1, 7] },
-            { name: "SDLC", range: [8, 14] },
-            { name: "Web", range: [15, 22] },
-            { name: "QA Техники", range: [23, 30] },
-            { name: "Безопасность", range: [31, 48] },
-            { name: "Регрессия", range: [49, 50] }
-        ];
-
-        let currentIdx = -1;
-        let isPlaying = false;
-        let progressTimer;
-        let studiedCount = 0;
-
-        function init() {
-            const list = document.getElementById('question-list');
-            categories.forEach(cat => {
-                const section = document.createElement('div');
-                section.className = "mb-6";
-                section.innerHTML = `<h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-4 mb-2">${cat.name}</h4><div id="cat-${cat.name}"></div>`;
-                list.appendChild(section);
-
-                examDB.filter(q => q.cat === cat.name).forEach(item => {
-                    const btn = document.createElement('button');
-                    btn.className = "w-full text-left px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition rounded-xl mb-1 flex items-center gap-3 group";
-                    btn.id = `qbtn-${item.id}`;
-                    btn.onclick = () => { selectQuestion(examDB.indexOf(item)); if(window.innerWidth < 768) toggleMobileMenu(); };
-                    btn.innerHTML = `<span class="text-[10px] font-mono text-slate-300 group-hover:text-amber-500">${item.id}</span> <span class="truncate">${item.t}</span>`;
-                    document.getElementById(`cat-${cat.name}`).appendChild(btn);
-                });
-            });
-
-            initChart();
+        // Инициализация Telegram Web App
+        let tg = window.Telegram.WebApp;
+        if (tg) {
+            tg.expand();
+            tg.ready();
         }
 
-        function initChart() {
-            const ctx = document.getElementById('mainChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Основы', 'Web', 'Безопасность', 'Процессы'],
-                    datasets: [{
-                        data: [15, 25, 45, 15],
-                        backgroundColor: ['#fcd34d', '#f97316', '#dc2626', '#1e293b'],
-                        borderWidth: 0,
-                        hoverOffset: 10
-                    }]
-                },
-                options: {
-                    maintainAspectRatio: false,
-                    cutout: '80%',
-                    plugins: {
-                        legend: { display: false }
-                    }
-                }
-            });
-        }
+        // База из 50 вопросов и кратких структурированных ответов
+        const qaData = [
+            { q: "Тестирование ПО. Составляющие качества ПО. Миссии и задачи", a: "<b>Тестирование ПО</b> — проверка соответствия между реальным и ожидаемым поведением системы.<br><b>Составляющие качества:</b> надежность, удобство (usability), эффективность, безопасность, сопровождаемость.<br><b>Миссия:</b> снижение рисков сбоя на проде и предоставление актуальной информации о качестве продукта." },
+            { q: "Уровни тестирования и их описание", a: "1. <b>Модульное (Unit)</b> — проверка отдельных функций/классов изолированно.<br>2. <b>Интеграционное</b> — проверка взаимодействия между модулями/системами.<br>3. <b>Системное</b> — тестирование всей системы целиком на соответствие исходным требованиям.<br>4. <b>Приемочное (UAT)</b> — финальная проверка заказчиком или пользователями перед релизом." },
+            { q: "Цели тестирования, цели тестировщика. Ожидаемый результат. Категории ошибок", a: "<b>Цель тестирования:</b> выявление дефектов, проверка соответствия требованиям.<br><b>Цель тестировщика:</b> найти баги как можно раньше, предотвратить их появление.<br><b>Результат:</b> Ожидаемый (как должно быть по ТЗ) и Фактический (как система сработала в реальности).<br><b>Критичность ошибок:</b> Blocker, Critical, Major, Minor, Trivial." },
+            { q: "Характеристики и метрики качества ПО", a: "Регулируются стандартом ISO 25010.<br><b>Характеристики:</b> функциональная пригодность, надежность, производительность, юзабилити, безопасность, совместимость.<br><b>Метрики:</b> плотность дефектов (баги на строку кода), покрытие требований тестами, процент успешных тест-кейсов." },
+            { q: "Жизненный цикл ПО. Методы разработки", a: "<b>Этапы ЖЦ (SDLC):</b> Анализ требований -> Проектирование -> Разработка -> Тестирование -> Деплой -> Поддержка.<br><b>Модели:</b><br>- <i>Waterfall (Каскадная):</i> строгий последовательный переход от этапа к этапу.<br>- <i>Agile (Гибкая: Scrum, Kanban):</i> итеративная разработка короткими циклами (спринтами) с частыми релизами." },
+            { q: "Цикл тестирования, этапы", a: "<b>STLC (Жизненный цикл тестирования):</b><br>1. Анализ требований.<br>2. Планирование тестирования (Test Plan).<br>3. Разработка тест-дизайна (тест-кейсы, чек-листы).<br>4. Настройка тестовой среды.<br>5. Выполнение тестов и регистрация багов.<br>6. Анализ результатов и закрытие цикла." },
+            { q: "Чек-листы в тестировании. Статусы проверок", a: "<b>Чек-лист</b> — структурированный список проверок без детального пошагового описания (в отличие от тест-кейса).<br><b>Статусы:</b> Passed (Пройден), Failed (Провален), Blocked (Заблокирован — невозможно проверить из-за другого бага), Skipped (Пропущен)." },
+            { q: "Ошибки в веб-формах. Позитивное и негативное тестирование", a: "<b>Ошибки:</b> отсутствие валидации на пустые поля, спецсимволы, длину строки, SQL-инъекции.<br><b>Позитивное:</b> ввод корректных данных (валидный email, правильный пароль) для проверки работы функции.<br><b>Негативное:</b> ввод заведомо неверных данных для проверки устойчивости системы и вывода понятных ошибок." },
+            { q: "Требования тестирования. Важность требований", a: "<b>Требования</b> — спецификация того, что должно делать ПО.<br><b>Важность:</b> исправление ошибки, найденной на этапе анализа требований, стоит в десятки раз дешевле, чем исправление этой же ошибки на этапе кодинга или после релиза." },
+            { q: "Логика создания эффективных проверок", a: "Основана на применении техник тест-дизайна:<br>1. <b>Эквивалентное разделение</b> (выбираем одного представителя из группы похожих данных).<br>2. <b>Анализ граничных значений</b> (проверяем границы классов: min, min-1, max, max+1).<br>3. Таблицы решений и попарное тестирование (Pairwise)." },
+            { q: "Наборы тест-кейсов. Классификация наборов", a: "<b>Test Suite</b> — группа тест-кейсов, объединенная общей целью.<br><b>Классификация:</b> Smoke (Дымовой — критический функционал), Sanity (Санитарный — проверка конкретного модуля), Regression (Регрессионный — проверка, что старое не сломалось), Функциональный." },
+            { q: "Пользовательские сценарии", a: "<b>User Story / Use Case</b> — описание последовательности действий пользователя в системе для достижения бизнес-цели (например, 'Оформить заказ в корзине'). Пишется простым языком без технической реализации." },
+            { q: "Анализ и тестирование требований", a: "Проверка ТЗ до начала разработки. Требования проверяются на: <i>полноту, однозначность, непротиворечивость, тестируемость, атомарность, актуальность</i>." },
+            { q: "Ошибки при анализе и тестировании требований", a: "Пропуск двусмысленных формулировок (например, 'система должна работать быстро'), игнорирование негативных сценариев, невнимательность к противоречиям между разными разделами ТЗ." },
+            { q: "Тестирование сайтов. Виды тестирования веб-приложений", a: "Включает в себя: Функциональное тестирование, Кроссбраузерное (Chrome, Safari, Firefox), Адаптивное/Мобильное (разные экраны), Тестирование UI/UX, Тестирование производительности и Безопасности." },
+            { q: "Тестирование производительности. Нагрузочное и стрессовое", a: "<b>Нагрузочное (Load):</b> проверка работы системы при ожидаемой нормальной или пиковой нагрузке.<br><b>Стрессовое (Stress):</b> проверка системы в условиях экстремальных нагрузок (выше нормы) для поиска точки отказа и оценки восстановления." },
+            { q: "Веб-тестирование. DevTools и коды состояния HTTP", a: "<b>DevTools вкладки:</b> Elements (DOM/CSS), Console (ошибки JS), Network (API запросы), Application (Cookies/Local Storage).<br><b>HTTP коды:</b> 2xx — Успех, 3xx — Редирект, 4xx — Ошибка клиента (404 Not Found), 5xx — Ошибка сервера (500 Internal Error)." },
+            { q: "Общепринятые наименования UI элементов. UI input-элементы", a: "Элементы: Button (кнопка), Checkbox (чекбокс), Radio Button (переключатель), Dropdown/Select (выпадающий список), Modal (модальное окно).<br>Input-типы: text, password, email, number, date, file." },
+            { q: "Дефекты веб-приложений. Степени критичности дефектов", a: "<b>Severity (Критичность):</b> влияние бага на бизнес-логику системы.<br>Грейды: Blocker (система не работает), Critical (сломан основной функционал без обходного пути), Major (есть обходной путь), Minor (незначительный баг), Trivial (опечатка)." },
+            { q: "Примеры дефектов в веб-приложениях", a: "Форма регистрации отправляет пустой пароль; верстка кнопки налезает на текст на экранах iPhone; битая ссылка в футере; бесконечная загрузка корзины товаров при оплате." },
+            { q: "Автоматизированное тестирование. Виды тестов", a: "Использование кода для запуска проверок. <b>Виды:</b> Unit-тесты (код), API/Интеграционные тесты (проверка эндпоинтов), UI/E2E-тесты (имитация действий пользователя в браузере с помощью Selenium/Playwright)." },
+            { q: "Как пишутся тесты. Критерии. Повышение надежности", a: "Пишутся по паттерну AAA (Arrange — подготовка, Act — действие, Assert — проверка).<br><b>Критерии хорошего теста:</b> стабильность (нет флаксовости), независимость, быстрота, атомарность.<br>Повышение надежности: Code Review, CI/CD процессы." },
+            { q: "Тестирование черного ящика. Цель и техники", a: "<b>Black Box</b> — тестирование без знания внутреннего устройства кода системы.<br><b>Цель:</b> проверить функционал глазами пользователя.<br><b>Техники:</b> эквивалентное разделение, анализ граничных значений, предугадывание ошибки." },
+            { q: "Парадигмы черного ящика. Классы эквивалентности", a: "<b>Класс эквивалентности</b> — диапазон входных данных, при вводе которых программа выдает одинаковый результат. Пример: если поле принимает числа от 1 до 10, классы: (<0), (1-10), (>10)." },
+            { q: "Тестирование методом белого ящика. Методы", a: "<b>White Box</b> — тестирование с полным доступом к исходному коду программы.<br><b>Методы:</b> статическое ревью кода, динамический анализ, отладка, проверка потоков данных и управления." },
+            { q: "Этапы белого ящика. Охват операторов и ветвления", a: "<b>Покрытие операторов (Statement Coverage):</b> выполнение каждой строки кода хотя бы раз.<br><b>Покрытие ветвлений (Branch Coverage):</b> проверка всех исходов условных операторов (каждое условие 'if' сработало и как True, и как False)." },
+            { q: "Покрытие кода. Методы покрытия кода", a: "Показывает, какой процент кода выполнен тестами. Измеряется специальными инструментами (например, Jacoco, Istanbul). Методы включают покрытие функций, строк, условий и путей." },
+            { q: "Тестовое покрытие. Методы и цели", a: "<b>Тестовое покрытие</b> — оценка плотности покрытия требований тест-кейсами. Цель: понять риски релиза, найти 'белые пятна' в логике, которые не были проверены перед выпуском продукта." },
+            { q: "Тестирование графического интерфейса (GUI)", a: "Проверка визуальной части приложения. Типы: функциональное UI-тестирование, проверка юзабилити, адаптивное тестирование под экраны, кроссплатформенное UI-тестирование." },
+            { q: "Ключевые критерии качества GUI. Методы", a: "<b>Критерии:</b> консистентность (одинаковый стиль кнопок), читаемость шрифтов, доступность (Accessibility для слабовидящих).<br><b>Методы:</b> сверка по пикселям (Pixel Perfect) с макетом Figma, автоматические скриншотные тесты." },
+            { q: "SQL-инъекция. Типы SQL-инъекций", a: "Внедрение вредоносного SQL-кода в поле ввода формы для несанкционированного доступа к БД.<br><b>Типы:</b> In-band (классические, через вывод ошибок), Inferential/Blind (слепые — по времени или логическому ответу), Out-of-band." },
+            { q: "Методы защиты от SQL-инъекций", a: "1. Использование параметризованных запросов (Prepared Statements).<br>2. Использование ORM (Hibernate, Sequelize).<br>3. Экранирование и строгая валидация входящих типов данных на бэкенде." },
+            { q: "Межсайтовый скриптинг. Типы и различия XSS", a: "<b>XSS</b> — внедрение вредоносного JavaScript-кода в веб-страницу, который выполняется в браузере пользователя при ее открытии. Цель — кража куки, сессий, токенов." },
+            { q: "Рефлективные, хранимые и основанные на DOM XSS", a: "- <i>Stored (Хранимая):</i> скрипт сохраняется в БД (например, в комментарии) и показывается всем.<br>- <i>Reflected (Отраженная):</i> скрипт передается в URL-параметре и сразу выполняется.<br>- <i>DOM-based:</i> уязвимость чисто в клиентском JS, обрабатывающем URL." },
+            { q: "IDOR. Метод работы атаки. Типы атак IDOR", a: "<b>IDOR</b> — небезопасные прямые ссылки на объекты. Происходит, когда злоумышленник меняет ID ресурса в запросе (например, `api/user/10` на `api/user/11`) и получает доступ к чужим приватным данным без авторизации." },
+            { q: "Использование уязвимостей IDOR. Слабые места", a: "Слабое место — отсутствие проверки прав доступа к конкретной записи на стороне сервера. Защита: использование непредсказуемых UUID вместо инкрементных ID (1,2,3) и обязательная авторизация владения объектом." },
+            { q: "Уровни, роли и права доступа", a: "<b>Аутентификация</b> — проверка, кто ты (логин/пароль).<br><b>Авторизация</b> — проверка прав. Модели доступа: RBAC (ролевой доступ: Админ, Модератор, Гость) и ABAC (доступ на основе атрибутов контекста)." },
+            { q: "Несанкционированный доступ. Методы защиты информации", a: "Доступ в обход правил безопасности. <b>Защита:</b> шифрование данных (AES, RSA), использование HTTPS, внедрение двухфакторной аутентификации (MFA), регулярный аудит логов безопасности." },
+            { q: "Техники безопасной парольной авторизации в Веб", a: "Пароли никогда не хранятся в чистом виде — только хэши с солью (Salt). Передача данных только по HTTPS. Схемы: Session-based (куки на сервере) или Token-based (JWT токены на клиенте)." },
+            { q: "Хеш функция. Условия и требования криптографических хэшей", a: "<b>Хэш-функция</b> — алгоритм, превращающий данные в строку фиксированной длины. Требования: необратимость (нельзя восстановить пароль из хэша), стойкость к коллизиям, лавинный эффект (микроизменение меняет хэш до неузнаваемости). Примеры: SHA-256, bcrypt." },
+            { q: "CSRF-атаки. Запросы HTTP, подверженные атаке", a: "<b>CSRF</b> — подделка межсайтовых запросов. Злоумышленник заставляет браузер авторизованного пользователя отправить запрос на доверенный сайт. Подвержены любые POST/PUT запросы, которые аутентифицируют сессию автоматически через куки." },
+            { q: "CSRF-token. Виды, способы защиты", a: "<b>CSRF-токен</b> — уникальный одноразовый секретный ключ, который бэкенд выдает клиенту. Сервер отклонит любой изменяющий запрос (POST), если в заголовках нет этого токена. Также помогает флаг `SameSite=Strict` для сессионных кук." },
+            { q: "Защита формы от спам-ботов. Виды ботов", a: "Боты: парсеры, спам-автоматы, headless-браузеры (Puppeteer). Классическая защита — интеграция капчи (reCAPTCHA, Cloudflare Turnstile), которая заставляет решать визуальные или логические задачи." },
+            { q: "Защита формы от спам-ботов без капчи", a: "1. <b>Honeypot (Приманка):</b> скрытое через CSS `display:none` поле. Люди его не видят, а боты заполняют автоматическими данными -> форма отклоняется.<br>2. Проверка времени заполнения (если форма отправлена за 0.5 сек — это бот)." },
+            { q: "Внедрение XML External Entity (XXE). Возможности", a: "<b>XXE</b> — уязвимость XML-парсеров, позволяющая злоумышленнику внедрять ссылки на внешние сущности. Позволяет читать локальные файлы сервера (например, `/etc/passwd`), устраивать SSRF-атаки или вызывать DoS." },
+            { q: "Методы повышения привилегий. Внедрение сущностей. RCE", a: "Через XXE можно достучаться до внутренних эндпоинтов облачных провайдеров (AWS/GCP метаданные) и украсть админские ключи. В редких случаях конфигурации парсера это может привести к Remote Code Execution (RCE) — удаленному запуску команд." },
+            { q: "DDoS. Классы атак по модели OSI. Канальный уровень", a: "<b>DDoS</b> — распределенная атака для отказа системы в обслуживании.<br><b>Канальный уровень (L2):</b> MAC-флуд (заполнение таблицы коммутатора мусорными адресами для перехвата или остановки трафика)." },
+            { q: "DDoS атаки прикладного и транспортного уровня", a: "- <b>Транспортный уровень (L4):</b> SYN-флуд (закидывание сервера запросами на соединение TCP без завершения рукопожатия), UDP-флуд.<br>- <b>Прикладной уровень (L7):</b> HTTP-флуд (массовый вызов тяжелых страниц сайта или API поиска), атака Slowloris." },
+            { q: "Регрессионное тестирование. Виды регрессии", a: "<b>Регрессионное тестирование</b> — проверка того, что новые изменения в коде или исправления багов не сломали уже работающий функционал.<br><b>Виды:</b> полное, выборочное (проверка задетых модулей), регрессия багов (перепроверка исправлений)." },
+            { q: "Регрессионные тест-кейсы. Этапы регрессионного тестирования", a: "<b>Этапы:</b><br>1. Сбор измененного кода и оценка влияния изменений.<br>2. Отбор подходящих тест-кейсов из регрессионного пула.<br>3. Выполнение тестов.<br>4. Анализ упавших тестов, заведение багов и актуализация базы тест-кейсов." }
+        ];
 
-        function selectQuestion(idx) {
-            if (idx < 0 || idx >= examDB.length) return;
-            currentIdx = idx;
-            const q = examDB[idx];
+        let currentIdx = 0;
+        let score = 0;
+        let answeredCount = 0;
+        const total = qaData.length;
+        const checkedQuestions = new Array(total).fill(null); // Трекинг ответов: true/false
 
-            document.getElementById('welcome-screen').classList.add('hidden');
-            const content = document.getElementById('content-screen');
-            content.classList.remove('hidden');
-            document.getElementById('main-view').scrollTop = 0;
+        // Заполнение выпадающего списка
+        const selectEl = document.getElementById('question-select');
+        qaData.forEach((item, index) => {
+            let opt = document.createElement('option');
+            opt.value = index;
+            opt.innerText = `${index + 1}. ${item.q.substring(0, 45)}...`;
+            selectEl.appendChild(opt);
+        });
 
-            document.getElementById('q-cat').innerText = q.cat;
-            document.getElementById('q-title').innerText = q.t;
-            document.getElementById('q-body').innerHTML = q.a;
-            document.getElementById('footer-q-title').innerText = q.t;
-            document.getElementById('footer-q-status').innerText = `Вопрос ${q.id} из 50`;
-            document.getElementById('timer-display').innerText = `${String(idx+1).padStart(2,'0')}:00 / 00:50`;
-
-            document.querySelectorAll('[id^="qbtn-"]').forEach(el => el.classList.remove('active-q'));
-            document.getElementById(`qbtn-${q.id}`).classList.add('active-q');
-
-            studiedCount = Math.max(studiedCount, idx + 1);
-            updateProgress();
+        function updateUI() {
+            const current = qaData[currentIdx];
+            document.getElementById('q-number').innerText = `Вопрос ${currentIdx + 1} из ${total}`;
+            document.getElementById('q-text').innerText = current.q;
+            document.getElementById('answer-box').innerHTML = current.a;
             
-            resetTrack();
-            if(isPlaying) startTrack();
+            // Сбрасываем видимость ответа
+            document.getElementById('answer-box').style.display = 'none';
+            document.getElementById('feedback-group').style.display = 'none';
+            document.getElementById('btn-show').style.display = 'block';
+            
+            // Синхронизируем выпадающий список
+            selectEl.value = currentIdx;
+
+            // Обновляем статистику и прогресс-бар
+            const answered = checkedQuestions.filter(v => v !== null).length;
+            const known = checkedQuestions.filter(v => v === true).length;
+            document.getElementById('stats-text').innerText = `Изучено: ${known}/${total}`;
+            
+            const progressPercent = (answered / total) * 100;
+            document.getElementById('progress').style.width = `${progressPercent}%`;
         }
 
-        function updateProgress() {
-            const perc = (studiedCount / 50) * 100;
-            document.getElementById('global-progress-bar').style.width = `${perc}%`;
-            document.getElementById('global-progress-text').innerText = `Изучено: ${studiedCount} / 50`;
+        function toggleAnswer() {
+            document.getElementById('answer-box').style.display = 'block';
+            document.getElementById('feedback-group').style.display = 'grid';
+            document.getElementById('btn-show').style.display = 'none';
         }
 
-        function togglePlay() {
-            if (currentIdx === -1) return startLearning();
-            isPlaying = !isPlaying;
-            document.getElementById('play-btn').innerText = isPlaying ? '⏸' : '▶';
-            if (isPlaying) startTrack(); else clearInterval(progressTimer);
+        function markQuestion(isKnown) {
+            checkedQuestions[currentIdx] = isKnown;
+            nextQuestion();
         }
 
-        function startTrack() {
-            let p = 0;
-            clearInterval(progressTimer);
-            progressTimer = setInterval(() => {
-                p += 1;
-                document.getElementById('track-progress').style.width = `${p}%`;
-                if(p >= 100) { clearInterval(progressTimer); nextQ(); }
-            }, 100);
+        function nextQuestion() {
+            if (currentIdx < total - 1) {
+                currentIdx++;
+                updateUI();
+            } else {
+                alert("Поздравляем! Вы прошли все 50 вопросов. Повторите те, что вызвали сложности.");
+            }
         }
 
-        function resetTrack() {
-            clearInterval(progressTimer);
-            document.getElementById('track-progress').style.width = '0%';
+        function prevQuestion() {
+            if (currentIdx > 0) {
+                currentIdx--;
+                updateUI();
+            }
         }
 
-        function nextQ() { if(currentIdx < examDB.length - 1) selectQuestion(currentIdx + 1); }
-        function prevQ() { if(currentIdx > 0) selectQuestion(currentIdx - 1); }
-
-        function startLearning() { selectQuestion(0); }
-
-        function toggleMobileMenu() {
-            document.getElementById('sidebar').classList.toggle('-translate-x-full');
+        function jumpToQuestion(idx) {
+            currentIdx = parseInt(idx);
+            updateUI();
         }
 
-        function handleSeek(e) {
-            const bar = e.currentTarget;
-            const clickX = e.offsetX;
-            const width = bar.offsetWidth;
-            const p = (clickX / width) * 100;
-            document.getElementById('track-progress').style.width = `${p}%`;
-        }
-
-        function shareProgress() {
-            alert(`Мой прогресс подготовки: ${studiedCount}/50 вопросов! 🚀`);
-        }
-
-        window.onload = init;
+        // Инициализация первого вопроса при загрузке
+        updateUI();
     </script>
 </body>
 </html>
